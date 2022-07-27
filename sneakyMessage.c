@@ -4,10 +4,18 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "encoder.h"
+
 void printUsage(char** argv);
 void parseArgs(int argc, char** argv, int* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile);
 
 #define programName "Sneaky Message"
+#define invalid 0
+#define encode 1
+#define decode 2
+#define r 1
+#define g 2
+#define b 3
 
 /*
  * main: driver function for Sneaky Message program
@@ -19,23 +27,23 @@ int main(int argc, char** argv){
         printUsage(argv);
     }
 
-    // get arguements from command line
-        // -c = cover image file
-        // -h = message file
-        // -m = mode (encode / decode) 0 -> encode, 1 -> decode, 2 -> invalid
-        // -s stego file
-        // -i = indicator channel (r, g, or b) 0 -> R, 1 -> G, 2 -> B, 3 -> invalid
+    // initialize variables to hold cmd line args and parse
     int* channel = (int*)malloc(sizeof(int));
     int* mode = (int*)malloc(sizeof(int));
     char** coverFile = (char**)malloc(sizeof(char*));
     char** messageFile = (char**)malloc(sizeof(char*));
     char** stegoFile = (char**)malloc(sizeof(char*));
     parseArgs(argc, argv, channel, mode, coverFile, messageFile, stegoFile);
-    // printf("channel = %d\nmode = %d\ncoverFile = %s\nmessageFile = %s\nstegoFile = %s\n", *channel, *mode, *coverFile, *messageFile, *stegoFile);
+    printf("channel = %d\nmode = %d\ncoverFile = %s\nmessageFile = %s\nstegoFile = %s\n", *channel, *mode, *coverFile, *messageFile, *stegoFile);
 
+    // Check for valid channel selection
+    if(*channel == invalid){
+        printf("Invalid indicator channel selected, please choose r, g, or b.\n");
+        exit(-1);
+    }
 
-    // inital error check based on command line arguements
-    if(*mode == 0){
+    // call functions based on selected mode (encode or decode)
+    if(*mode == encode){
         if(access(*coverFile, R_OK|W_OK) != 0){
             printf("Cover file validation failed, check that file exists and has read/write permissions.\n");
             exit(-1);
@@ -44,40 +52,19 @@ int main(int argc, char** argv){
             printf("Message file validation failed, check that file exists and has read permissions.\n");
             exit(-1);
         }
-        if(*channel == 3){
-            printf("Invalid indicator channel selected, please choose r, g, or b.\n");
-            exit(-1);
-        }
+        // call encoder driver function
+        encodeDriver(*channel, *coverFile, *messageFile);
     }
-    else if(*mode == 1){
+    else if(*mode == decode){
         if(access(*stegoFile, R_OK) != 0){
             printf("Stego file validation failed, check that file exists and has read permissions.\n");
             exit(-1);
         }
-        if(*channel == 3){
-            printf("Invalid indicator channel selected, please choose r, g, or b.\n");
-            exit(-1);
-        }
+        // call decoder driver function
     }
-    else if(*mode == 2){
+    else if(*mode == invalid){
         printf("Invalid mode selected, please choose encode or decode.\n");
         exit(-1);
-    }
-    else{
-        printf("Something went wrong!\n");
-        exit(-1);
-    }
-
-    // call functions based on args
-    if(*mode == 0){
-        //hide message
-        // printf("channel = %d\nmode = %d\ncoverFile = %s\nmessageFile = %s\nstegoFile = %s\n", *channel, *mode, *coverFile, *messageFile, *stegoFile);
-        return 0;
-    }
-    else if(*mode == 1){
-        //extract message
-        // printf("channel = %d\nmode = %d\ncoverFile = %s\nmessageFile = %s\nstegoFile = %s\n", *channel, *mode, *coverFile, *messageFile, *stegoFile);
-        return 0;
     }
     else{
         printf("Something went wrong!\n");
@@ -104,6 +91,11 @@ void printUsage(char** argv){
 
 /*
  * parseArgs: parses the command line arguements
+ * -c = cover image file
+ * -h = message file
+ * -s = stego file
+ * -i = indicator channel (r, g, or b)
+ * -m = mode (encode or decode)
  */
 void parseArgs(int argc, char** argv, int* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile){
     int c;
@@ -117,13 +109,13 @@ void parseArgs(int argc, char** argv, int* channel, int* mode, char** coverFile,
                 break;
             case 'm':
                 if(!strcmp(optarg, "encode")){
-                    *mode = 0;
+                    *mode = encode;
                 }
                 else if(!strcmp(optarg, "decode")){
-                    *mode = 1;
+                    *mode = decode;
                 }
                 else{
-                    *mode = 2;
+                    *mode = invalid;
                 }
                 break;
             case 's':
@@ -131,16 +123,16 @@ void parseArgs(int argc, char** argv, int* channel, int* mode, char** coverFile,
                 break;
             case 'i':
                 if(!strcmp(optarg, "r")){
-                    *channel = 0;
+                    *channel = r;
                 }
                 else if(!strcmp(optarg, "g")){
-                    *channel = 1;
+                    *channel = g;
                 }
                 else if(!strcmp(optarg, "b")){
-                    *channel = 2;
+                    *channel = b;
                 }
                 else{
-                    *channel = 3;
+                    *channel = invalid;
                 }
                 break;
             case '?':
