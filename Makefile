@@ -1,6 +1,6 @@
 PROGRAMS = sneakyMessage
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -ggdb
 all: $(PROGRAMS)
 
 clean:

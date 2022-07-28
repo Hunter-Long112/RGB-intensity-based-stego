@@ -87,5 +87,14 @@ int readKthBit(int k, char data){
 
 int writeKthBit(int k, char data, int value){
     int mask = 1 << k;
-    return ((k & ~mask) | (value << k));
+    return ((data & ~mask) | (value << k));
+}
+
+int readPixel(FILE *coverFile, pixel *newPixel){
+    newPixel->blue = fgetc(coverFile);
+    newPixel->green = fgetc(coverFile);
+    newPixel->red = fgetc(coverFile);
+    if(newPixel->blue == EOF || newPixel->green == EOF || newPixel->red == EOF)
+        return EOF;
+    else return 0;
 }
