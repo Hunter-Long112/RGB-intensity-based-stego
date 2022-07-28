@@ -11,6 +11,15 @@ void freeBmpData(struct bmpData *data);
 int readKthBit(int k, char data);
 int writeKthBit(int k, char data, int value);
 
+enum RGB {RED, GREEN, BLUE};
+typedef enum RGB RGB;
+
+typedef struct pixel {
+   char red;
+   char green;
+   char blue;
+} pixel;
+
 /*
  * bmpData: struct to hold important data about the bmp file we are working with
  */
@@ -22,5 +31,7 @@ typedef struct bmpData
     char *fileContents;
     char *fileName;
 } bmpData;
+
+int readPixel(FILE *coverFile, pixel *newPixel);
 
 #endif

@@ -1,10 +1,12 @@
 #include "encoder.h"
 #include <string.h>
 
-int getFileLength(char *path){
+int numLSB = 3;
+
+unsigned int getFileLength(char *path){
     FILE *f = fopen(path, "r");
     fseek(f, 0, SEEK_END);
-    int len = ftell(f);
+    unsigned int len = ftell(f);
     fclose(f);
     return len;
 }
@@ -31,6 +33,8 @@ void encodeDriver(int channel, char* coverFile, char* messageFile){
         exit(1);
     }
 
+    embedData(channel, cover, messageData, msgLen);
+
     // embedding loop
     // read in a single pixel's data
     // compare two non-indicator channels
@@ -42,8 +46,60 @@ void encodeDriver(int channel, char* coverFile, char* messageFile){
     return;
 }
 
-void embedData(int channel, bmpData *cover, char *messageData){
-    char *header = NULL;
-    //Copy cover file header over to new string
-    strncpy(header, cover->fileContents, cover->pixelOffset);
+RGB selectChannel(RGB indicator, pixel *pix){
+    switch(indicator){
+        case RED:
+            if(pix->green > pix->blue)
+                return BLUE;
+            else
+                return GREEN;
+        case GREEN:
+            if(pix->red > pix->blue)
+                return BLUE;
+            else
+                return RED;
+        case BLUE:
+            if(pix->green > pix->red)
+                return RED;
+            else
+                return GREEN;
+    }
+    return RED;
+}
+
+void writeBitToChannel(RGB channel, pixel *pix, int k, int bit){
+   if(channel == RED)
+       pix->red = writeKthBit(k, pix->red, bit);
+   if(channel == GREEN)
+       pix->green = writeKthBit(k, pix->green, bit);
+   if(channel == BLUE)
+       pix->blue = writeKthBit(k, pix->blue, bit);
+}
+
+void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned int msgLen){
+    FILE *coverFile = fopen(cover->fileName, "r");
+    FILE *msgFile = fopen(messageData, "r");
+
+    char *stegData = NULL;
+    stegData = malloc(sizeof(char)*(cover->pixelOffset+(cover->imageSize*3)+1));
+
+    fread(stegData, cover->pixelOffset, 1, coverFile);
+
+    pixel *coverPixel = (pixel *) malloc(sizeof(pixel));
+
+    //read in 3 bytes/pixel
+    int loopCounter = 0;
+    char msgByte = 0;
+    while(readPixel(coverFile, coverPixel) != EOF){
+        RGB channelToUse = selectChannel(indicator, coverPixel);
+        for(int i = numLSB-1; i > 0; i--){
+            if(loopCounter == 0){
+               loopCounter = 8;
+               msgByte = fgetc(msgFile);
+            }
+            int bitToWrite = readKthBit(loopCounter, msgByte);
+            writeBitToChannel(channelToUse, coverPixel, loopCounter, bitToWrite);
+            loopCounter--;
+        }
+    }
 }
