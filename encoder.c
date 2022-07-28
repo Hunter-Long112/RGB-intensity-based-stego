@@ -1,5 +1,25 @@
 #include "encoder.h"
 
+bmpData *initBmpData(char *path){
+    bmpData* data = malloc(sizeof(bmpData));
+    data->fileContents = readInFile(path);
+    data->fileName = path;
+
+    int bitsPerPixeel = *((short *) &data->fileContents[28]);
+
+    char *fileDimensionOne = &data->fileContents[18];
+    int x = *((int *) fileDimensionOne);
+
+    char *fileDimensionTwo = &data->fileContents[22];
+    int y = *((int *) fileDimensionTwo);
+
+    data->imageSize = x * y;
+
+    char *fileOffset = &data->fileContents[10];
+    int offset = *((int *) fileOffset);
+    data->pixelOffset = offset;
+}
+
 /*
  * encodeDriver: driver function for encode mode of program
  */
@@ -24,6 +44,12 @@ void encodeDriver(int channel, char* coverFile, char* messageFile){
     if(!isValidBitMap(coverFileContents)){
         printf("Error: Cover file is not a 24 bit bmp file, exiting...\n");
     }
+
+    // embedding loop
+    // read in a single pixel's data
+    // compare two non-indicator channels
+    // write given # of bits in lowest intensity non-indicator
+    // set indicator bit in indciator channel to whichvever channel
 
     free(coverFileContents);
 
