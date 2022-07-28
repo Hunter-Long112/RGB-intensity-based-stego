@@ -5,7 +5,7 @@ bmpData *initBmpData(char *path){
     data->fileContents = readInFile(path);
     data->fileName = path;
 
-    int bitsPerPixeel = *((short *) &data->fileContents[28]);
+    int bitsPerPixel = *((short *) &data->fileContents[28]);
 
     char *fileDimensionOne = &data->fileContents[18];
     int x = *((int *) fileDimensionOne);
@@ -18,6 +18,7 @@ bmpData *initBmpData(char *path){
     char *fileOffset = &data->fileContents[10];
     int offset = *((int *) fileOffset);
     data->pixelOffset = offset;
+    return data;
 }
 
 /*
