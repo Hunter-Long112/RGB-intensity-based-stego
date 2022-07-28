@@ -61,6 +61,7 @@ int main(int argc, char** argv){
             exit(-1);
         }
         // call decoder driver function
+        decodeDriver(*channel, *stegoFile);
     }
     else if(*mode == invalid){
         printf("Invalid mode selected, please choose encode or decode.\n");
