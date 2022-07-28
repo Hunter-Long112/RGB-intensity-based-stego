@@ -6,6 +6,7 @@
 
 char* readInFile(char* fileName);
 int isValidBitMap(char *filedata);
+struct bmpData *initBmpData(char *path);
 
 /*
  * bmpData: struct to hold important data about the bmp file we are working with

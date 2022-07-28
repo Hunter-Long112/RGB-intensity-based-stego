@@ -55,3 +55,23 @@ int isValidBitMap(char *filedata){
 	return 1;
 }
 
+bmpData *initBmpData(char *path){
+    bmpData* data = malloc(sizeof(bmpData));
+    data->fileContents = readInFile(path);
+    data->fileName = path;
+
+    int bitsPerPixel = *((short *) &data->fileContents[28]);
+
+    char *fileDimensionOne = &data->fileContents[18];
+    int x = *((int *) fileDimensionOne);
+
+    char *fileDimensionTwo = &data->fileContents[22];
+    int y = *((int *) fileDimensionTwo);
+
+    data->imageSize = x * y;
+
+    char *fileOffset = &data->fileContents[10];
+    int offset = *((int *) fileOffset);
+    data->pixelOffset = offset;
+    return data;
+}
