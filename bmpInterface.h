@@ -7,6 +7,9 @@
 char* readInFile(char* fileName);
 int isValidBitMap(char *filedata);
 struct bmpData *initBmpData(char *path);
+void freeBmpData(struct bmpData *data);
+int readKthBit(int k, char data);
+int writeKthBit(int k, char data, int value);
 
 /*
  * bmpData: struct to hold important data about the bmp file we are working with

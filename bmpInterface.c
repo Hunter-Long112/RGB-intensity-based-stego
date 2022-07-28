@@ -75,3 +75,17 @@ bmpData *initBmpData(char *path){
     data->pixelOffset = offset;
     return data;
 }
+
+void freeBmpData(bmpData *data){
+    free(data->fileContents);
+    free(data);
+}
+
+int readKthBit(int k, char data){
+    return (data >> k) & 1;
+}
+
+int writeKthBit(int k, char data, int value){
+    int mask = 1 << k;
+    return ((k & ~mask) | (value << k));
+}
