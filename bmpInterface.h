@@ -11,13 +11,13 @@ void freeBmpData(struct bmpData *data);
 int readKthBit(int k, char data);
 int writeKthBit(int k, char data, int value);
 
-enum RGB {RED, GREEN, BLUE};
+enum RGB {INVALID, RED, GREEN, BLUE};
 typedef enum RGB RGB;
 
 typedef struct pixel {
-   char red;
-   char green;
-   char blue;
+   unsigned char red;
+   unsigned char green;
+   unsigned char blue;
 } pixel;
 
 /*

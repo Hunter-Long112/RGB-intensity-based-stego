@@ -18,7 +18,7 @@ void encodeDriver(int channel, char* coverFile, char* messageFile){
 
     // read contents of the cover file into an array 
     bmpData* cover = initBmpData(coverFile);
-    char *messageData = readInFile(messageFile);
+    //char *messageData = readInFile(messageFile);
 
     // verify that the cover file is a 24 bit bmp file
     if(!isValidBitMap(cover->fileContents)){
@@ -33,7 +33,7 @@ void encodeDriver(int channel, char* coverFile, char* messageFile){
         exit(1);
     }
 
-    embedData(channel, cover, messageData, msgLen);
+    embedData(channel, cover, messageFile, msgLen);
 
     // embedding loop
     // read in a single pixel's data
@@ -82,23 +82,24 @@ void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned i
 
     char *stegData = NULL;
     stegData = malloc(sizeof(char)*(cover->pixelOffset+(cover->imageSize*3)+1));
-
     fread(stegData, cover->pixelOffset, 1, coverFile);
 
     pixel *coverPixel = (pixel *) malloc(sizeof(pixel));
 
-    //read in 3 bytes/pixel
     int loopCounter = 0;
     char msgByte = 0;
     while(readPixel(coverFile, coverPixel) != EOF){
         RGB channelToUse = selectChannel(indicator, coverPixel);
-        for(int i = numLSB-1; i > 0; i--){
-            if(loopCounter == 0){
-               loopCounter = 8;
+        for(int i = numLSB-1; i >= 0; i--){
+            if(loopCounter < 0){
+               loopCounter = 7;
                msgByte = fgetc(msgFile);
             }
             int bitToWrite = readKthBit(loopCounter, msgByte);
-            writeBitToChannel(channelToUse, coverPixel, loopCounter, bitToWrite);
+            //TODO write modified 'coverPixel' to stegData string
+            //
+            //also, test by embedding 4 'A's for hunter to extract
+            writeBitToChannel(channelToUse, coverPixel, i, bitToWrite);
             loopCounter--;
         }
     }

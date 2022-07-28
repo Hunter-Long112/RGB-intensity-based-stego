@@ -87,7 +87,7 @@ int readKthBit(int k, char data){
 
 int writeKthBit(int k, char data, int value){
     int mask = 1 << k;
-    return ((k & ~mask) | (value << k));
+    return ((data & ~mask) | (value << k));
 }
 
 int readPixel(FILE *coverFile, pixel *newPixel){
