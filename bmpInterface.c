@@ -1,5 +1,18 @@
 #include "bmpInterface.h"
 
+void hexDump(char *data, int numBytes){
+    for(int i = 0; i < numBytes; i++){
+        if(i % 16 == 0)
+            printf("\n%08x: ", i);
+        if(i % 8 == 0)
+            printf(" ");
+        if(i == 320){
+            break;
+        }
+        printf("%02x ", (unsigned char) data[i]);
+    }
+    printf("\n");
+}
 /*
  * readInFile: function to read in the contents of a file as bytes, stores contents in char array
  */
@@ -37,7 +50,7 @@ char* readInFile(char* fileName){
 int isValidBitMap(char *filedata){
 
     printf("Magic Number:%c%c\n", filedata[0], filedata[1]);
-	if( filedata[0] != 'B' || filedata[1] != 'M') return 0;
+    if( filedata[0] != 'B' || filedata[1] != 'M') return 0;
 
     // validate that file is 24 bits per pixel
     // set integer to 0 to be used to extract bits per pixel from file
@@ -52,7 +65,7 @@ int isValidBitMap(char *filedata){
     printf("Bits Per Pixel: %d (0x%x)\n", x, x);
     if (x != 24) return 0;
 
-	return 1;
+    return 1;
 }
 
 bmpData *initBmpData(char *path){

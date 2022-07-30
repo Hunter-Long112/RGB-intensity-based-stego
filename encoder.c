@@ -48,21 +48,34 @@ void encodeDriver(int channel, char* coverFile, char* messageFile){
 
 RGB selectChannel(RGB indicator, pixel *pix){
     switch(indicator){
+        //BGR
         case RED:
-            if(pix->green > pix->blue)
+            if(pix->green > pix->blue){
+                writeBitToChannel(indicator, pix, 0, 0);
                 return BLUE;
-            else
+            }
+            else{
+                writeBitToChannel(indicator, pix, 0, 1);
                 return GREEN;
+            }
         case GREEN:
-            if(pix->red > pix->blue)
+            if(pix->red > pix->blue){
+                writeBitToChannel(indicator, pix, 0, 1);
                 return BLUE;
-            else
+            }
+            else{
+                writeBitToChannel(indicator, pix, 0, 0);
                 return RED;
+            }
         case BLUE:
-            if(pix->green > pix->red)
+            if(pix->green > pix->red){
+                writeBitToChannel(indicator, pix, 0, 1);
                 return RED;
-            else
+            }
+            else{
+                writeBitToChannel(indicator, pix, 0, 0);
                 return GREEN;
+            }
     }
     return RED;
 }
@@ -76,31 +89,55 @@ void writeBitToChannel(RGB channel, pixel *pix, int k, int bit){
        pix->blue = writeKthBit(k, pix->blue, bit);
 }
 
+
 void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned int msgLen){
     FILE *coverFile = fopen(cover->fileName, "r");
     FILE *msgFile = fopen(messageData, "r");
+    unsigned int msgLength = getFileLength(messageData);
 
     char *stegData = NULL;
     stegData = malloc(sizeof(char)*(cover->pixelOffset+(cover->imageSize*3)+1));
     fread(stegData, cover->pixelOffset, 1, coverFile);
 
+    int coverFileSize = getFileLength(cover->fileName);
+
     pixel *coverPixel = (pixel *) malloc(sizeof(pixel));
 
-    int loopCounter = 0;
+    int loopCounter = -1;
+    int lenCount = 0;
+    //Offset into stegData string where we write actual modified pixel data (after pixel offset)
+    int msgOffset = cover->pixelOffset;
     char msgByte = 0;
-    while(readPixel(coverFile, coverPixel) != EOF){
+    char *msgLenAsChar = (char *) &msgLength;
+    int numDataRead = cover->pixelOffset;
+
+    do {
+        readPixel(coverFile, coverPixel);
+        numDataRead += 3;
         RGB channelToUse = selectChannel(indicator, coverPixel);
         for(int i = numLSB-1; i >= 0; i--){
+            //Embed message length first
             if(loopCounter < 0){
                loopCounter = 7;
-               msgByte = fgetc(msgFile);
+                if(lenCount < 4)
+                    msgByte = msgLenAsChar[lenCount++];
+                else if(lenCount >= 4) msgByte = fgetc(msgFile);
             }
-            int bitToWrite = readKthBit(loopCounter, msgByte);
-            //TODO write modified 'coverPixel' to stegData string
-            //
-            //also, test by embedding 4 'A's for hunter to extract
-            writeBitToChannel(channelToUse, coverPixel, i, bitToWrite);
-            loopCounter--;
+            if(msgByte != EOF){
+                int bitToWrite = readKthBit(loopCounter, msgByte);
+                writeBitToChannel(channelToUse, coverPixel, i, bitToWrite);
+                loopCounter--;
+            }
         }
-    }
+        stegData[msgOffset++] = coverPixel->blue;
+        stegData[msgOffset++] = coverPixel->green;
+        stegData[msgOffset++] = coverPixel->red;
+    } while(numDataRead < coverFileSize);
+    //printf("Pixel data: \n");
+    //hexDump(stegData, 320);
+    char stegFileName[500] = "hid_";
+    strncat(stegFileName, cover->fileName, 500);
+    FILE * stegFile = fopen(stegFileName, "w");
+    fwrite(stegData, coverFileSize, 1, stegFile);
+    fclose(stegFile);
 }

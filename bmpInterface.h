@@ -33,5 +33,6 @@ typedef struct bmpData
 } bmpData;
 
 int readPixel(FILE *coverFile, pixel *newPixel);
+void hexDump(char *data, int numBytes);
 
 #endif

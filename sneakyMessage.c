@@ -5,9 +5,10 @@
 #include <ctype.h>
 
 #include "encoder.h"
+#include "decoder.h"
 
 void printUsage(char** argv);
-void parseArgs(int argc, char** argv, int* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile);
+void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile);
 
 #define programName "Sneaky Message"
 #define invalid 0
@@ -28,7 +29,7 @@ int main(int argc, char** argv){
     }
 
     // initialize variables to hold cmd line args and parse
-    int* channel = (int*)malloc(sizeof(int));
+    RGB* channel = (RGB*)malloc(sizeof(RGB));
     int* mode = (int*)malloc(sizeof(int));
     char** coverFile = (char**)malloc(sizeof(char*));
     char** messageFile = (char**)malloc(sizeof(char*));
@@ -98,7 +99,7 @@ void printUsage(char** argv){
  * -i = indicator channel (r, g, or b)
  * -m = mode (encode or decode)
  */
-void parseArgs(int argc, char** argv, int* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile){
+void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile){
     int c;
     while((c = getopt(argc, argv, "c:h:m:s:i:")) != -1){
         switch(c){
@@ -124,16 +125,16 @@ void parseArgs(int argc, char** argv, int* channel, int* mode, char** coverFile,
                 break;
             case 'i':
                 if(!strcmp(optarg, "r")){
-                    *channel = r;
+                    *channel = RED;
                 }
                 else if(!strcmp(optarg, "g")){
-                    *channel = g;
+                    *channel = GREEN;
                 }
                 else if(!strcmp(optarg, "b")){
-                    *channel = b;
+                    *channel = BLUE;
                 }
                 else{
-                    *channel = invalid;
+                    *channel = INVALID;
                 }
                 break;
             case '?':
