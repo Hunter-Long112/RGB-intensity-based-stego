@@ -34,5 +34,6 @@ typedef struct bmpData
 
 int readPixel(FILE *coverFile, pixel *newPixel);
 void hexDump(char *data, int numBytes);
+int swapEndian(int value);
 
 #endif

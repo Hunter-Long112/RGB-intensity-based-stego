@@ -1,5 +1,15 @@
 #include "bmpInterface.h"
 
+int swapEndian(int value){
+    //Q1Q2Q3Q4
+    //Q4Q3Q2Q1
+    int q1 = value >> 6*4;
+    int q2 = (value & 0x00ff0000) >> 2*4;
+    int q3 = (value & 0x0000ff00) << 2*4;
+    int q4 = value << 6*4;
+    return q4 | q3 | q2 | q1;
+}
+
 void hexDump(char *data, int numBytes){
     for(int i = 0; i < numBytes; i++){
         if(i % 16 == 0)
