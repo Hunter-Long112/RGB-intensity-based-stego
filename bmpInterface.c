@@ -59,7 +59,6 @@ char* readInFile(char* fileName){
  */
 int isValidBitMap(char *filedata){
 
-    printf("Magic Number:%c%c\n", filedata[0], filedata[1]);
     if( filedata[0] != 'B' || filedata[1] != 'M') return 0;
 
     // validate that file is 24 bits per pixel
@@ -72,9 +71,9 @@ int isValidBitMap(char *filedata){
     x = x << 8;
     // bitwise or low byte of x with lest significant byte of 'bits per pixel' from file, x is now the value of bits per pixel
     x = x | filedata[28];
-    printf("Bits Per Pixel: %d (0x%x)\n", x, x);
     if (x != 24) return 0;
 
+    // should check to see the number of bytes of pixel data in a row are divisible by 4, if not, reject file or deal with padding bytes
     return 1;
 }
 
@@ -114,10 +113,33 @@ int writeKthBit(int k, char data, int value){
 }
 
 int readPixel(FILE *coverFile, pixel *newPixel){
-    newPixel->blue = fgetc(coverFile);
-    newPixel->green = fgetc(coverFile);
-    newPixel->red = fgetc(coverFile);
-    if(newPixel->blue == EOF || newPixel->green == EOF || newPixel->red == EOF)
-        return EOF;
-    else return 0;
+    int ch = 0;
+    if((ch = fgetc(coverFile)) != EOF){
+        newPixel->blue = ch;
+    }
+    else return EOF;
+    if((ch = fgetc(coverFile)) != EOF){
+        newPixel->green = ch;
+    }
+    else return EOF;
+    if((ch = fgetc(coverFile)) != EOF){
+        newPixel->red = ch;
+    }
+    else return EOF;
+    return 0;
+}
+
+void printBits(size_t const size, void const * const ptr)
+{
+    unsigned char *b = (unsigned char*) ptr;
+    unsigned char byte;
+    int i, j;
+    
+    for (i = size-1; i >= 0; i--) {
+        for (j = 7; j >= 0; j--) {
+            byte = (b[i] >> j) & 1;
+            printf("%u", byte);
+        }
+    }
+    puts("");
 }

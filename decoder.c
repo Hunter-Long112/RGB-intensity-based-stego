@@ -24,64 +24,44 @@ void decodeDriver(RGB channel, char* stegoFile){
     unsigned char embeddedChar;
     int i, j = 0;
 
-    FILE *stegFile = fopen(stego->fileName, "r");
+    FILE *stegFile = fopen(stego->fileName, "rb");
     fseek(stegFile, stego->pixelOffset, SEEK_SET);
-    while(bitCount < 31){
+    while(bitCount < 32){
         readPixel(stegFile, currentPixel);
         embeddedChar = getEmbeddedChar(currentPixel, channel);
         i = 0;
-        while(i < numLsb && bitCount < 31){
+        while(i < numLsb && bitCount < 32){
             j = readKthBit(numLsb-1-i, embeddedChar);
-            hiddenMessageLength = hiddenMessageLength | j;
             hiddenMessageLength = hiddenMessageLength << 1;
+            hiddenMessageLength = hiddenMessageLength | j;
             i++;
             bitCount++;
         }
     }
     hiddenMessageLength = swapEndian(hiddenMessageLength);
+    printBits(4, &hiddenMessageLength);
     printf("%u\n", hiddenMessageLength);
     printf("%x\n", hiddenMessageLength);
 
     // after first 4 bytes, every byte extracted until length of message is reached is written to message file
 
-    // extraction loop
-    // read in pixel data to struct
-    // check indicator channel to find out which channel has embedded data
-    // bitwise & with mask (00000111)
-    // store discovered bits
-    // int = 0
-    // char = 0
-    // or with int
-            
-    // write one bit from int to char
-    // shift char over one
-    // increment # of bits written to char by one
-    // when written 8 bits to char, write to file
-    // shift left 3
-    // when you've written 8 bits to
     return;
 }
 
-// make this a seperate helper function
-// unsigned int getMessageLength(){}
-
+/*
+ * getEmbeddedChar: determines which channel of a given pixel has data embedded in it based on the indicator channel
+ */
 unsigned char getEmbeddedChar(pixel* pixel, RGB channel){
-
-    unsigned char hiderChar;
     int x = 0;
-
-    //R GB
     if(channel == RED){
         // get LSB of r channel
         x = pixel->red & 0x01;
         // determine channel based on LSB of r (indicator) channel
         switch(x){
         case(0):
-            hiderChar = pixel->green;
-            break;
+            return pixel->green;
         case(1):
-            hiderChar = pixel->blue;
-            break;
+            return pixel->blue;
         default:
             printf("Something went wrong!\n");
             exit(-1);
@@ -93,56 +73,30 @@ unsigned char getEmbeddedChar(pixel* pixel, RGB channel){
         // determine channel based on LSB of g (indicator) channel
         switch(x){
         case(0):
-            hiderChar = pixel->red;
-            break;
+            return pixel->blue;
         case(1):
-            hiderChar = pixel->blue;
-            break;
+            return pixel->red;
+        default:
+            printf("Something went wrong!\n");
+            exit(-1);
+        }
+    }
+    else if(channel == BLUE){
+        // get LSB of b channel
+        x = pixel->blue & 0x01;
+        // determine channel based on LSB of b (indicator) channel
+        switch(x){
+        case(0):
+            return pixel->red;
+        case(1):
+            return pixel->green;
         default:
             printf("Something went wrong!\n");
             exit(-1);
         }
     }
     else{
-        // get LSB of b channel
-        x = pixel->blue & 0x01;
-        // determine channel based on LSB of b (indicator) channel
-        switch(x){
-        case(0):
-            hiderChar = pixel->red;
-            break;
-        case(1):
-            hiderChar = pixel->green;
-            break;
-        default:
-            printf("Something went wrong!\n");
-            exit(-1);
-        }
+        printf("Something went wrong!\n");
+        exit(-1);
     }
-
-    return hiderChar;
-
 }
-
-/*
-  char* readInFile(char* fileName);
-  int isValidBitMap(char *filedata);
-  struct bmpData *initBmpData(char *path);
-  void freeBmpData(struct bmpData *data);
-  int readKthBit(int k, char data);
-  int writeKthBit(int k, char data, int value);
-*/
-
-/*
- * bmpData: struct to hold important data about the bmp file we are working with
- */
-/*
-  typedef struct bmpData
-  {
-  //  don't forget - stored little endian!!!!
-  int imageSize; // number of pixels (find by multiplying image dimensions, bytes 18-21 x bytes 22-25, inclusive in file contents array)
-  int pixelOffset; // byte offset into file where pixel data begins (bytes 10-13, inclusive in file contents array)
-  char *fileContents;
-  char *fileName;
-  } bmpData;
-*/

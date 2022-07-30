@@ -35,7 +35,7 @@ int main(int argc, char** argv){
     char** messageFile = (char**)malloc(sizeof(char*));
     char** stegoFile = (char**)malloc(sizeof(char*));
     parseArgs(argc, argv, channel, mode, coverFile, messageFile, stegoFile);
-    printf("channel = %d\nmode = %d\ncoverFile = %s\nmessageFile = %s\nstegoFile = %s\n", *channel, *mode, *coverFile, *messageFile, *stegoFile);
+    // printf("channel = %d\nmode = %d\ncoverFile = %s\nmessageFile = %s\nstegoFile = %s\n", *channel, *mode, *coverFile, *messageFile, *stegoFile);
 
     // Check for valid channel selection
     if(*channel == invalid){

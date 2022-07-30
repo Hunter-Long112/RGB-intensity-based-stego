@@ -35,12 +35,6 @@ void encodeDriver(int channel, char* coverFile, char* messageFile){
 
     embedData(channel, cover, messageFile, msgLen);
 
-    // embedding loop
-    // read in a single pixel's data
-    // compare two non-indicator channels
-    // write given # of bits in lowest intensity non-indicator
-    // set indicator bit in indciator channel to whichvever channel
-
     freeBmpData(cover);
 
     return;
@@ -51,31 +45,34 @@ RGB selectChannel(RGB indicator, pixel *pix){
         //BGR
         case RED:
             if(pix->green > pix->blue){
-                writeBitToChannel(indicator, pix, 0, 0);
+                writeBitToChannel(indicator, pix, 0, 1);
                 return BLUE;
             }
             else{
-                writeBitToChannel(indicator, pix, 0, 1);
+                writeBitToChannel(indicator, pix, 0, 0);
                 return GREEN;
             }
         case GREEN:
             if(pix->red > pix->blue){
-                writeBitToChannel(indicator, pix, 0, 1);
+                writeBitToChannel(indicator, pix, 0, 0);
                 return BLUE;
             }
             else{
-                writeBitToChannel(indicator, pix, 0, 0);
+                writeBitToChannel(indicator, pix, 0, 1);
                 return RED;
             }
         case BLUE:
             if(pix->green > pix->red){
-                writeBitToChannel(indicator, pix, 0, 1);
+                writeBitToChannel(indicator, pix, 0, 0);
                 return RED;
             }
             else{
-                writeBitToChannel(indicator, pix, 0, 0);
+                writeBitToChannel(indicator, pix, 0, 1);
                 return GREEN;
             }
+        case INVALID:
+            printf("Something went wrong!\n");
+            exit(-1);
     }
     return RED;
 }
@@ -108,7 +105,8 @@ void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned i
     //Offset into stegData string where we write actual modified pixel data (after pixel offset)
     int msgOffset = cover->pixelOffset;
     char msgByte = 0;
-    char *msgLenAsChar = (char *) &msgLength;
+    char* msgLenAsChar = (char *) &msgLength;
+    //printBits(4, msgLenAsChar);
     int numDataRead = cover->pixelOffset;
 
     do {
@@ -140,4 +138,5 @@ void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned i
     FILE * stegFile = fopen(stegFileName, "w");
     fwrite(stegData, coverFileSize, 1, stegFile);
     fclose(stegFile);
+    printf("Stego File Created: %s\n", stegFileName);
 }
