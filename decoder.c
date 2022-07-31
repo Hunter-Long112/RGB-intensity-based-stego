@@ -1,51 +1,31 @@
 #include "decoder.h"
 #include "bmpInterface.h"
 
+int numLsb = 3;
+
 unsigned char getEmbeddedChar(pixel* pixel, RGB channel);
 
-void decodeDriver(RGB channel, char* stegoFile){
-
-    // this is going to be a cmd line arg eventually
-    int numLsb = 3;
-
-    // initialize bmpData struct
-    bmpData* stego = initBmpData(stegoFile);
-
-    // validate that stego file is a 24 bit bmp file
-    if(!isValidBitMap(stego->fileContents)){
-        printf("Error: Cover file is not a 24 bit bmp file, exiting...\n");
-        exit(1);
-    }
-
-    // read in first 4 bytes of hidden data, this is the length of the hidden message
-    pixel* currentPixel = (pixel *) malloc(sizeof(pixel));
-    unsigned int hiddenMessageLength = 0;
-    int bitCount = 0;
-    unsigned char embeddedChar;
-    int i, j = 0;
-
-    FILE *stegFile = fopen(stego->fileName, "rb");
-    fseek(stegFile, stego->pixelOffset, SEEK_SET);
-    while(bitCount < 32){
-        readPixel(stegFile, currentPixel);
-        embeddedChar = getEmbeddedChar(currentPixel, channel);
-        i = 0;
-        while(i < numLsb && bitCount < 32){
-            j = readKthBit(numLsb-1-i, embeddedChar);
-            hiddenMessageLength = hiddenMessageLength << 1;
-            hiddenMessageLength = hiddenMessageLength | j;
-            i++;
-            bitCount++;
+void decodeDriver(RGB indicator, char* stegoFile){
+    FILE *stegFile = fopen(stegoFile, "r");
+    pixel *stegPixel = (pixel *) malloc(sizeof(pixel));
+    unsigned int numDataRead = 54;
+    fseek(stegFile, numDataRead, SEEK_SET);
+    int i, j;
+    unsigned char hiddenChar;
+    //Extract first 32 bits to get message length
+    unsigned int msgLength = 0;
+    int timesToLoop = ((32/numLsb + 32%numLsb)-1);
+    for(i = 0; i < timesToLoop; i++){
+        readPixel(stegFile, stegPixel);
+        hiddenChar = getEmbeddedChar(stegPixel, indicator);
+        for(j = numLsb-1; j >= 0; j--){
+            if(i == timesToLoop-1 && j == (numLsb-(32%numLsb)-1))
+                break;
+            int hiddenBit = readKthBit(j, hiddenChar);
+            msgLength = (msgLength << 1) | hiddenBit;
         }
     }
-    hiddenMessageLength = swapEndian(hiddenMessageLength);
-    printBits(4, &hiddenMessageLength);
-    printf("%u\n", hiddenMessageLength);
-    printf("%x\n", hiddenMessageLength);
-
-    // after first 4 bytes, every byte extracted until length of message is reached is written to message file
-
-    return;
+    printf("msgLength: %08x %u\nmsgLength (swap): %08x %u\n", msgLength, msgLength, swapEndian(msgLength), swapEndian(msgLength));
 }
 
 /*

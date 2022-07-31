@@ -3,7 +3,7 @@
 int swapEndian(int value){
     //Q1Q2Q3Q4
     //Q4Q3Q2Q1
-    int q1 = value >> 6*4;
+    int q1 = (value & 0xff000000) >> 6*4;
     int q2 = (value & 0x00ff0000) >> 2*4;
     int q3 = (value & 0x0000ff00) << 2*4;
     int q4 = value << 6*4;
