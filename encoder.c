@@ -1,7 +1,7 @@
 #include "encoder.h"
 #include <string.h>
 
-int numLSB = 3;
+int numLSB = 6;
 
 unsigned int getFileLength(char *path){
     FILE *f = fopen(path, "r");
