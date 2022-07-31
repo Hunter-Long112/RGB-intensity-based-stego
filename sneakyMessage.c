@@ -8,7 +8,7 @@
 #include "decoder.h"
 
 void printUsage(char** argv);
-void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile);
+void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile, int* numLSB);
 
 #define programName "Sneaky Message"
 #define invalid 0
@@ -17,6 +17,8 @@ void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile,
 #define r 1
 #define g 2
 #define b 3
+
+int* numLSB;
 
 /*
  * main: driver function for Sneaky Message program
@@ -34,9 +36,16 @@ int main(int argc, char** argv){
     char** coverFile = (char**)malloc(sizeof(char*));
     char** messageFile = (char**)malloc(sizeof(char*));
     char** stegoFile = (char**)malloc(sizeof(char*));
-    parseArgs(argc, argv, channel, mode, coverFile, messageFile, stegoFile);
-    //printf("channel = %d\nmode = %d\ncoverFile = %s\nmessageFile = %s\nstegoFile = %s\n", *channel, *mode, *coverFile, *messageFile, *stegoFile);
+    numLSB = (int*)malloc(sizeof(int));
+    parseArgs(argc, argv, channel, mode, coverFile, messageFile, stegoFile, numLSB);
+    // printf("channel = %d\nmode = %d\ncoverFile = %s\nmessageFile = %s\nstegoFile = %s\n", *channel, *mode, *coverFile, *messageFile, *stegoFile);
+    printf("numBitsToEmbed = %d\n", *numLSB);
 
+    // Check for valid number of bits to embed
+    if(*numLSB > 7 || *numLSB < 1){
+        printf("Invalid number of bits to embed selected, please choose a value in the range 1 to 8, inclusive.\n");
+        exit(-1);     
+    }
     // Check for valid channel selection
     if(*channel == invalid){
         printf("Invalid indicator channel selected, please choose r, g, or b.\n");
@@ -54,7 +63,7 @@ int main(int argc, char** argv){
             exit(-1);
         }
         // call encoder driver function
-        encodeDriver(*channel, *coverFile, *messageFile);
+        encodeDriver(*channel, *coverFile, *messageFile, numLSB);
     }
     else if(*mode == decode){
         if(access(*stegoFile, R_OK) != 0){
@@ -62,7 +71,7 @@ int main(int argc, char** argv){
             exit(-1);
         }
         // call decoder driver function
-        decodeDriver(*channel, *stegoFile);
+        decodeDriver(*channel, *stegoFile, numLSB);
     }
     else if(*mode == invalid){
         printf("Invalid mode selected, please choose encode or decode.\n");
@@ -86,8 +95,8 @@ int main(int argc, char** argv){
  */
 void printUsage(char** argv){
     printf("\n%s\nContributers: Hunter Long, Thomas White, and Michael Ginsberg\n\n", programName);
-    printf("To hide a message file inside a 24 bit BMP file:\n\t%s -m encode -c <cover file> -h <message file> -i <indicator channel (r, g, or b)>\n\n", argv[0]);
-    printf("To extract a hidden message from a 24 bit BMP file:\n\t%s -m decode -s <stego file> -i <indicator channel (r, g, or b)>\n\n", argv[0]);
+    printf("To hide a message file inside a 24 bit BMP file:\n\t%s -m encode -c <cover file> -h <message file> -i <indicator channel (r, g, or b)> -n <number of bits to embed>\n\n", argv[0]);
+    printf("To extract a hidden message from a 24 bit BMP file:\n\t%s -m decode -s <stego file> -i <indicator channel (r, g, or b)> -n <number of bits embedded>\n\n", argv[0]);
     exit(0);
 }
 
@@ -99,10 +108,13 @@ void printUsage(char** argv){
  * -i = indicator channel (r, g, or b)
  * -m = mode (encode or decode)
  */
-void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile){
+void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile, int* numLSB){
     int c;
-    while((c = getopt(argc, argv, "c:h:m:s:i:")) != -1){
+    while((c = getopt(argc, argv, "c:h:m:s:i:n:")) != -1){
         switch(c){
+            case 'n':
+                *numLSB = (*optarg - '0');
+                break;
             case 'c':
                 *coverFile = optarg;
                 break;
@@ -138,7 +150,7 @@ void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile,
                 }
                 break;
             case '?':
-                if(optopt == 'c' || optopt == 'h' || optopt == 'm' || optopt == 's' || optopt == 'i'){
+                if(optopt == 'c' || optopt == 'h' || optopt == 'm' || optopt == 's' || optopt == 'i' || optopt == 'n'){
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 }
                 else if (isprint (optopt)){
@@ -154,5 +166,3 @@ void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile,
     }
     return;
 }
-
-

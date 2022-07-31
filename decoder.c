@@ -5,11 +5,10 @@
 
 void writeMsg(char *msg, int msgLen, char* stegoFile);
 
-int numLsb = 7;
-
 unsigned char getEmbeddedChar(pixel* pixel, RGB channel);
 
-void decodeDriver(RGB indicator, char* stegoFile){
+void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
+    printf("numLSB = %d\n", *numLSB);
 
     FILE *stegFile = fopen(stegoFile, "r");
     bmpData* stegoFileData = initBmpData(stegoFile);
@@ -30,13 +29,13 @@ void decodeDriver(RGB indicator, char* stegoFile){
     //Extract first 32 bits to get message length
     unsigned int msgLength = 0;
 
-    int timesToLoop = (32/numLsb)+((32%numLsb) != 0);
+    int timesToLoop = (32/(*numLSB))+((32%(*numLSB)) != 0);
     //printf("timesToLoop: %u\n", timesToLoop);
     for(i = 0; i < timesToLoop; i++){
         readPixel(stegFile, stegPixel);
         hiddenChar = getEmbeddedChar(stegPixel, indicator);
-        for(j = numLsb-1; j >= 0; j--){
-            if(i == timesToLoop-1 && j == (numLsb-(32%numLsb)-1)){
+        for(j = (*numLSB)-1; j >= 0; j--){
+            if(i == timesToLoop-1 && j == ((*numLSB)-(32%(*numLSB))-1)){
                 remainder = j+1;
                 break;
             }
@@ -49,7 +48,7 @@ void decodeDriver(RGB indicator, char* stegoFile){
 
     //Hidden message length in bytes extracted, now calculate how many pixels to read
     //and extract
-    int pixelsToRead = msgLength*numLsb;
+    int pixelsToRead = msgLength*(*numLSB);
     int bitsInByte = 0;
     unsigned int msgIndex = 0;
     unsigned char currentByte = 0;
@@ -65,7 +64,7 @@ void decodeDriver(RGB indicator, char* stegoFile){
             msg[msgIndex++] = currentByte;
             currentByte = 0;
         }
-        for(j = numLsb-1; j >= 0; j--){
+        for(j = (*numLSB)-1; j >= 0; j--){
             if(remainder > 0){
                 j = remainder-1;
                 remainder = 0;

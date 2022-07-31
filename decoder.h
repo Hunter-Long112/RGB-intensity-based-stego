@@ -6,7 +6,7 @@
 
 #include "bmpInterface.h"
 
-void decodeDriver(RGB channel, char* stegoFile);
+void decodeDriver(RGB channel, char* stegoFile, int* numLSB);
 unsigned char getEmbeddedChar(pixel* pixel, RGB channel);
 
 #endif

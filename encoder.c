@@ -1,8 +1,6 @@
 #include "encoder.h"
 #include <string.h>
 
-int numLSB = 7;
-
 unsigned int getFileLength(char *path){
     FILE *f = fopen(path, "r");
     fseek(f, 0, SEEK_END);
@@ -14,7 +12,8 @@ unsigned int getFileLength(char *path){
 /*
  * encodeDriver: driver function for encode mode of program
  */
-void encodeDriver(int channel, char* coverFile, char* messageFile){
+void encodeDriver(int channel, char* coverFile, char* messageFile, int* numLSB){
+    printf("numLSB = %d\n", *numLSB);
 
     // read contents of the cover file into an array 
     bmpData* cover = initBmpData(coverFile);
@@ -28,12 +27,12 @@ void encodeDriver(int channel, char* coverFile, char* messageFile){
 
     //Message data too long!
     int msgLen = getFileLength(messageFile);
-    if(((cover->imageSize*numLSB)/8) < msgLen){
-        fprintf(stderr, "Message file of length %d bytes exceeds capacity of %d.\n", msgLen, (cover->imageSize*numLSB)/8);
+    if(((cover->imageSize*(*numLSB))/8) < msgLen){
+        fprintf(stderr, "Message file of length %d bytes exceeds capacity of %d.\n", msgLen, (cover->imageSize*(*numLSB))/8);
         exit(1);
     }
 
-    embedData(channel, cover, messageFile, msgLen);
+    embedData(channel, cover, messageFile, msgLen, numLSB);
 
     freeBmpData(cover);
 
@@ -87,7 +86,7 @@ void writeBitToChannel(RGB channel, pixel *pix, int k, int bit){
 }
 
 
-void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned int msgLen){
+void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned int msgLen, int* numLSB){
     FILE *coverFile = fopen(cover->fileName, "r");
     FILE *msgFile = fopen(messageData, "r");
     unsigned int msgLength = getFileLength(messageData);
@@ -116,7 +115,7 @@ void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned i
         readPixel(coverFile, coverPixel);
         numDataRead += 3;
         RGB channelToUse = selectChannel(indicator, coverPixel);
-        for(int i = numLSB-1; i >= 0; i--){
+        for(int i = (*numLSB)-1; i >= 0; i--){
             //Embed message length first
             if(loopCounter < 0){
                loopCounter = 7;
@@ -138,8 +137,12 @@ void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned i
     } while(numDataRead < coverFileSize);
     //printf("Pixel data: \n");
     //hexDump(stegData, 320);
+    char* dashOffset = strrchr(cover->fileName, '/');
     char stegFileName[500] = "hid_";
-    strncat(stegFileName, cover->fileName, 500);
+    if(dashOffset != NULL)
+        strncat(stegFileName, dashOffset+1, 500);
+    else
+        strncat(stegFileName, cover->fileName, 500);
     FILE * stegFile = fopen(stegFileName, "w");
     fwrite(stegData, coverFileSize, 1, stegFile);
     fclose(stegFile);
