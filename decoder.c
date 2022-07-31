@@ -6,7 +6,15 @@ int numLsb = 3;
 unsigned char getEmbeddedChar(pixel* pixel, RGB channel);
 
 void decodeDriver(RGB indicator, char* stegoFile){
+
     FILE *stegFile = fopen(stegoFile, "r");
+    bmpData* stegoFileData = initBmpData(stegoFile);
+    // verify that the cover file is a 24 bit bmp file
+    if(!isValidBitMap(stegoFileData->fileContents)){
+        printf("Error: Cover file is not a 24 bit bmp file, exiting...\n");
+        exit(1);
+    }
+
     pixel *stegPixel = (pixel *) malloc(sizeof(pixel));
     unsigned int numDataRead = 54;
     fseek(stegFile, numDataRead, SEEK_SET);
