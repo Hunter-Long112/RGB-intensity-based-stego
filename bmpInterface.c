@@ -55,7 +55,6 @@ char* readInFile(char* fileName){
 
 /*
  * isValidBitMap: function to verify if a file is a 24 bit bmp file
- * Author: Professor Ortiz (all we did was add check to ensure it is specifically a 24 bit bmp)
  */
 int isValidBitMap(char *filedata){
 
@@ -73,7 +72,15 @@ int isValidBitMap(char *filedata){
     x = x | filedata[28];
     if (x != 24) return 0;
 
-    // should check to see the number of bytes of pixel data in a row are divisible by 4, if not, reject file or deal with padding bytes
+    // verify that the horizontal dimension of the file is divisible by 4, so that there are no padding bytes
+    char *horizontalFileDimension = &filedata[18];
+    unsigned int i = *((unsigned int *) horizontalFileDimension);
+    if((i % 4) != 0){
+        printf("The cover file you've selected does not have a horizontal dimension that is divisible by four, so there are padding bytes added to each row.\n");
+        printf("Please select a cover image that has a horizontal dimension divisible by four.\n");
+        exit(-1);
+    }
+
     return 1;
 }
 
