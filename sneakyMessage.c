@@ -43,7 +43,7 @@ int main(int argc, char** argv){
 
     // Check for valid number of bits to embed
     if(*numLSB > 7 || *numLSB < 3){
-        printf("Invalid number of bits to embed selected, please choose a value in the range 1 to 8, inclusive.\n");
+        printf("Invalid number of bits to embed selected, please choose a value in the range 3 to 7, inclusive.\n");
         exit(-1);     
     }
     // Check for valid channel selection
