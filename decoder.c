@@ -3,9 +3,9 @@
 
 #include <string.h>
 
-void writeMsg(char *msg, int msgLen);
+void writeMsg(char *msg, int msgLen, char* stegoFile);
 
-int numLsb = 3;
+int numLsb = 7;
 
 unsigned char getEmbeddedChar(pixel* pixel, RGB channel);
 
@@ -20,13 +20,18 @@ void decodeDriver(RGB indicator, char* stegoFile){
     }
 
     pixel *stegPixel = (pixel *) malloc(sizeof(pixel));
-    unsigned int numDataRead = 54;
+    bmpData* stegoBmp = initBmpData(stegoFile);
+    int pixelOffset = stegoBmp->pixelOffset;
+    free(stegoBmp);
+    unsigned int numDataRead = pixelOffset;
     fseek(stegFile, numDataRead, SEEK_SET);
     int i, j, remainder = 0;
     unsigned char hiddenChar;
     //Extract first 32 bits to get message length
     unsigned int msgLength = 0;
-    int timesToLoop = ((32/numLsb + 32%numLsb)-1);
+
+    int timesToLoop = (32/numLsb)+((32%numLsb) != 0);
+    //printf("timesToLoop: %u\n", timesToLoop);
     for(i = 0; i < timesToLoop; i++){
         readPixel(stegFile, stegPixel);
         hiddenChar = getEmbeddedChar(stegPixel, indicator);
@@ -39,7 +44,7 @@ void decodeDriver(RGB indicator, char* stegoFile){
             msgLength = (msgLength << 1) | hiddenBit;
         }
     }
-    printf("msgLength: %08x %u\nmsgLength (swap): %08x %u\n", msgLength, msgLength, swapEndian(msgLength), swapEndian(msgLength));
+    //printf("msgLength: %08x %u\nmsgLength (swap): %08x %u\n", msgLength, msgLength, swapEndian(msgLength), swapEndian(msgLength));
     msgLength = swapEndian(msgLength);
 
     //Hidden message length in bytes extracted, now calculate how many pixels to read
@@ -78,17 +83,22 @@ void decodeDriver(RGB indicator, char* stegoFile){
     //hexDump(msg, 100);
     //printf("Message:\n");
     //printf("%s\n", msg);
-    writeMsg(msg, msgLength);
+    writeMsg(msg, msgLength, stegoFile);
 
 }
 
 
-void writeMsg(char *msg, int msgLen){
+void writeMsg(char *msg, int msgLen, char *stegoFile){
     char extension[5] = ".txt";
     if(strncmp(msg, "BM", 2) == 0){
         strncpy(extension, ".bmp", 5);
     }
-    char msgPath[25] = "extracted_message";
+    else if(strncmp(msg, "\x89PNG", 4) == 0){
+        strncpy(extension, ".png", 5);
+    }
+    char msgPath[500] = "ext_";
+    int bytesToConcat = strnlen(stegoFile, 400)-4;
+    strncat(msgPath, stegoFile, bytesToConcat);
     strncat(msgPath, extension, 5);
     FILE *msgFile = fopen(msgPath, "w");
     fwrite(msg, msgLen, 1, msgFile);

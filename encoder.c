@@ -1,7 +1,7 @@
 #include "encoder.h"
 #include <string.h>
 
-int numLSB = 6;
+int numLSB = 7;
 
 unsigned int getFileLength(char *path){
     FILE *f = fopen(path, "r");
@@ -28,8 +28,8 @@ void encodeDriver(int channel, char* coverFile, char* messageFile){
 
     //Message data too long!
     int msgLen = getFileLength(messageFile);
-    if(msgLen >= (cover->imageSize/2)){
-        fprintf(stderr, "Message file of length %d bytes exceeds capacity of %d.\n", msgLen, (cover->imageSize/2));
+    if(((cover->imageSize*numLSB)/8) < msgLen){
+        fprintf(stderr, "Message file of length %d bytes exceeds capacity of %d.\n", msgLen, (cover->imageSize*numLSB)/8);
         exit(1);
     }
 
@@ -106,6 +106,9 @@ void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned i
     int msgOffset = cover->pixelOffset;
     char msgByte = 0;
     char* msgLenAsChar = (char *) &msgLength;
+
+    //printf("MSG LENGTH: %u\n", msgLength);
+    //printf("COVER LENGTH: %u\n", coverFileSize);
     //printBits(4, msgLenAsChar);
     int numDataRead = cover->pixelOffset;
 
@@ -121,11 +124,13 @@ void embedData(enum RGB indicator, bmpData *cover, char *messageData, unsigned i
                     msgByte = msgLenAsChar[lenCount++];
                 else if(lenCount >= 4) msgByte = fgetc(msgFile);
             }
-            if(msgByte != EOF){
-                int bitToWrite = readKthBit(loopCounter, msgByte);
-                writeBitToChannel(channelToUse, coverPixel, i, bitToWrite);
-                loopCounter--;
-            }
+            int bitToWrite = readKthBit(loopCounter, msgByte);
+            writeBitToChannel(channelToUse, coverPixel, i, bitToWrite);
+            loopCounter--;
+        }
+        if(msgOffset > coverFileSize){
+            printf("Capacity Hit.\n");
+            break;
         }
         stegData[msgOffset++] = coverPixel->blue;
         stegData[msgOffset++] = coverPixel->green;

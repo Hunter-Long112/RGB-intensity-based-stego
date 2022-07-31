@@ -6,7 +6,7 @@ int swapEndian(int value){
     int q1 = (value & 0xff000000) >> 6*4;
     int q2 = (value & 0x00ff0000) >> 2*4;
     int q3 = (value & 0x0000ff00) << 2*4;
-    int q4 = value << 6*4;
+    int q4 = (value & 0x000000ff) << 6*4;
     return q4 | q3 | q2 | q1;
 }
 
@@ -41,7 +41,7 @@ char* readInFile(char* fileName){
     rewind(filePtr);
 
     // allocate enough memory to store contents of file
-    fileContents = (char *)malloc(fileLength * sizeof(char));
+    fileContents = (char *)malloc(fileLength * sizeof(char)+1);
 
     // read in contents of file
     fread(fileContents, fileLength, 1, filePtr);
