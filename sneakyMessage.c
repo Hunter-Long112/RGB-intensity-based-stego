@@ -42,7 +42,7 @@ int main(int argc, char** argv){
     printf("numBitsToEmbed = %d\n", *numLSB);
 
     // Check for valid number of bits to embed
-    if(*numLSB > 7 || *numLSB < 1){
+    if(*numLSB > 7 || *numLSB < 3){
         printf("Invalid number of bits to embed selected, please choose a value in the range 1 to 8, inclusive.\n");
         exit(-1);     
     }
