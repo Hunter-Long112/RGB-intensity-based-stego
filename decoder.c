@@ -7,6 +7,15 @@ void writeMsg(char *msg, int msgLen, char* stegoFile);
 
 unsigned char getEmbeddedChar(pixel* pixel, RGB channel);
 
+int calcRemainder(int numLSB){
+   if(32%numLSB == 0){
+       return 0;
+   }
+   else{
+       return numLSB-32%numLSB;
+   }
+}
+
 void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
     printf("numLSB = %d\n", *numLSB);
 
@@ -30,20 +39,25 @@ void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
     unsigned int msgLength = 0;
 
     int timesToLoop = (32/(*numLSB))+((32%(*numLSB)) != 0);
-    //printf("timesToLoop: %u\n", timesToLoop);
+    int hiddenBit = 0;
+    printf("timesToLoop: %u\n", timesToLoop);
     for(i = 0; i < timesToLoop; i++){
         readPixel(stegFile, stegPixel);
         hiddenChar = getEmbeddedChar(stegPixel, indicator);
         for(j = (*numLSB)-1; j >= 0; j--){
-            if(i == timesToLoop-1 && j == ((*numLSB)-(32%(*numLSB))-1)){
-                remainder = j+1;
+            //sussy
+            if(i == timesToLoop-1 && j == calcRemainder(*numLSB)){
+                remainder = j;
+                printf("Remainder: %d\n", remainder);
+                hiddenBit = readKthBit(j, hiddenChar);
+                msgLength = (msgLength << 1) | hiddenBit;
                 break;
             }
-            int hiddenBit = readKthBit(j, hiddenChar);
+            hiddenBit = readKthBit(j, hiddenChar);
             msgLength = (msgLength << 1) | hiddenBit;
         }
     }
-    //printf("msgLength: %08x %u\nmsgLength (swap): %08x %u\n", msgLength, msgLength, swapEndian(msgLength), swapEndian(msgLength));
+    printf("msgLength: %08x %u\nmsgLength (swap): %08x %u\n", msgLength, msgLength, swapEndian(msgLength), swapEndian(msgLength));
     msgLength = swapEndian(msgLength);
 
     //Hidden message length in bytes extracted, now calculate how many pixels to read
@@ -52,7 +66,7 @@ void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
     int bitsInByte = 0;
     unsigned int msgIndex = 0;
     unsigned char currentByte = 0;
-    char *msg = (char *) malloc(sizeof(char)*msgLength+1);
+    char *msg = (char *) malloc(sizeof(char)*msgLength*4+1);
     for(i = 0; i < pixelsToRead; i++){
         if(remainder > 0){
             //Don't read in new pixel...
