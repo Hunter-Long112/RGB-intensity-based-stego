@@ -7,6 +7,13 @@
 #include "encoder.h"
 #include "decoder.h"
 
+/**
+ * Authors:
+ * Hunter Long (mia014)
+ * Thomas White (yhy312)
+ * Michael Ginsberg (sfi208)
+ */
+
 void printUsage(char** argv);
 void parseArgs(int argc, char** argv, RGB* channel, int* mode, char** coverFile, char** messageFile, char** stegoFile, int* numLSB);
 
@@ -38,8 +45,6 @@ int main(int argc, char** argv){
     char** stegoFile = (char**)malloc(sizeof(char*));
     numLSB = (int*)malloc(sizeof(int));
     parseArgs(argc, argv, channel, mode, coverFile, messageFile, stegoFile, numLSB);
-    // printf("channel = %d\nmode = %d\ncoverFile = %s\nmessageFile = %s\nstegoFile = %s\n", *channel, *mode, *coverFile, *messageFile, *stegoFile);
-    printf("numBitsToEmbed = %d\n", *numLSB);
 
     // Check for valid number of bits to embed
     if(*numLSB > 7 || *numLSB < 1){
