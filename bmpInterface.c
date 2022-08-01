@@ -1,5 +1,15 @@
 #include "bmpInterface.h"
 
+/**
+ * Authors:
+ * Hunter Long (mia014)
+ * Thomas White (yhy312)
+ * Michael Ginsberg (sfi208)
+ */
+
+/*
+ * swapEndian: function to swap the data stored in an int from little endian to big endian 
+ */
 int swapEndian(int value){
     //Q1Q2Q3Q4
     //Q4Q3Q2Q1
@@ -10,6 +20,9 @@ int swapEndian(int value){
     return q4 | q3 | q2 | q1;
 }
 
+/*
+ * hexDump: prints a byte stream in hexidecimal format (mock of hexdump tool)
+ */
 void hexDump(char *data, int numBytes){
     for(int i = 0; i < numBytes; i++){
         if(i % 16 == 0)
@@ -23,6 +36,7 @@ void hexDump(char *data, int numBytes){
     }
     printf("\n");
 }
+
 /*
  * readInFile: function to read in the contents of a file as bytes, stores contents in char array
  */
@@ -31,24 +45,13 @@ char* readInFile(char* fileName){
     FILE* filePtr;
     char* fileContents;
     long fileLength;
-
-    // open file for reading in binary mode
-    filePtr = fopen(fileName, "rb");
-
-    // get length of file by jumping to the end and recording byte offset
-    fseek(filePtr, 0, SEEK_END);
+    filePtr = fopen(fileName, "rb");                            // open file for reading in binary mode
+    fseek(filePtr, 0, SEEK_END);                                // get length of file by jumping to the end and recording byte offset
     fileLength = ftell(filePtr);
     rewind(filePtr);
-
-    // allocate enough memory to store contents of file
-    fileContents = (char *)malloc(fileLength * sizeof(char)+1);
-
-    // read in contents of file
-    fread(fileContents, fileLength, 1, filePtr);
-
-    // close file
-    fclose(filePtr);
-
+    fileContents = (char *)malloc(fileLength * sizeof(char)+1); // allocate enough memory to store contents of file
+    fread(fileContents, fileLength, 1, filePtr);                // read in contents of file
+    fclose(filePtr);                                            // close file
     return fileContents;
 
 }
@@ -61,15 +64,11 @@ int isValidBitMap(char *filedata){
     if( filedata[0] != 'B' || filedata[1] != 'M') return 0;
 
     // validate that file is 24 bits per pixel
-    // set integer to 0 to be used to extract bits per pixel from file
     int x = 0;
-    x = x & 0x00000000;
-    // bitwise or low byte of x with most significant byte of 'bits per pixel' from file
-    x = x | filedata[29];
-    // shift left 8 times (this puts most significant byte of 'bits per pixel' in the correct place and clears the low byte of x)
-    x = x << 8;
-    // bitwise or low byte of x with lest significant byte of 'bits per pixel' from file, x is now the value of bits per pixel
-    x = x | filedata[28];
+    x = x & 0x00000000;     // set integer to 0 to be used to extract bits per pixel from file
+    x = x | filedata[29];   // bitwise or low byte of x with most significant byte of 'bits per pixel' from file
+    x = x << 8;             // put most significant byte of 'bits per pixel' in the correct place and clear the low byte of x
+    x = x | filedata[28];   // bitwise or low byte of x with lest significant byte of 'bits per pixel' from file, x is now the value of bits per pixel
     if (x != 24) return 0;
 
     // verify that the horizontal dimension of the file is divisible by 4, so that there are no padding bytes
@@ -84,6 +83,10 @@ int isValidBitMap(char *filedata){
     return 1;
 }
 
+/*
+ * initBmpData: given a path to a bmp file, will initialize a bmpData struct with info about / contents
+ * of the bmp file and return a pointer to the struct
+ */
 bmpData *initBmpData(char *path){
     bmpData* data = malloc(sizeof(bmpData));
     data->fileContents = readInFile(path);
@@ -105,20 +108,33 @@ bmpData *initBmpData(char *path){
     return data;
 }
 
+/*
+ * freeBmpData: given a pointer to a bmpData struct, frees it from memory
+ */
 void freeBmpData(bmpData *data){
     free(data->fileContents);
     free(data);
 }
 
+/*
+ * readKthBit: reads in a specific, single bit from a given byte (char data)
+ */
 int readKthBit(int k, char data){
     return (data >> k) & 1;
 }
 
+/*
+ * writeKthBit: writes a specific, single bit to a byte (char data) at bit location k
+ * returns the modified int value 
+ */
 int writeKthBit(int k, char data, int value){
     int mask = 1 << k;
     return ((data & ~mask) | (value << k));
 }
 
+/*
+ * readPixel: reads the values of the color channels of the next pixel in a file into a given pixel struct
+ */
 int readPixel(FILE *coverFile, pixel *newPixel){
     int ch = 0;
     if((ch = fgetc(coverFile)) != EOF){
@@ -136,6 +152,9 @@ int readPixel(FILE *coverFile, pixel *newPixel){
     return 0;
 }
 
+/*
+ * printBits: prints size number of bytes worth of bits starting at the address passed in as ptr
+ */
 void printBits(size_t const size, void const * const ptr)
 {
     unsigned char *b = (unsigned char*) ptr;
