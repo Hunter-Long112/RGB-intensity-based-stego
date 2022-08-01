@@ -3,10 +3,20 @@
 
 #include <string.h>
 
-void writeMsg(char *msg, int msgLen, char* stegoFile);
+/**
+ * Authors:
+ * Hunter Long (mia014)
+ * Thomas White (yhy312)
+ * Michael Ginsberg (sfi208)
+ */
 
+void writeMsg(char *msg, int msgLen, char* stegoFile);
 unsigned char getEmbeddedChar(pixel* pixel, RGB channel);
 
+/*
+ * Calculates the remainining embedded bits in a AFTER
+ * reading the first 4 bytes (msg length) out of the embedded data.
+ */
 int calcRemainder(int numLSB){
    if(32%numLSB == 0){
        return 0;
@@ -16,8 +26,14 @@ int calcRemainder(int numLSB){
    }
 }
 
+/*
+ * Decode & extract the data out of a stego file
+ *
+ * param RGB indicator - the indicator channel of the stego file
+ * param char* stegoFile - the path to the file containing embedded data
+ * param int* numLSB - int pointer to the number of LSB's used to embed the data
+ */
 void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
-    printf("numLSB = %d\n", *numLSB);
 
     FILE *stegFile = fopen(stegoFile, "r");
     bmpData* stegoFileData = initBmpData(stegoFile);
@@ -27,6 +43,7 @@ void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
         exit(1);
     }
 
+    //Allocate and/or set necessary variables for extraction loop...
     pixel *stegPixel = (pixel *) malloc(sizeof(pixel));
     bmpData* stegoBmp = initBmpData(stegoFile);
     int pixelOffset = stegoBmp->pixelOffset;
@@ -38,17 +55,18 @@ void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
     //Extract first 32 bits to get message length
     unsigned int msgLength = 0;
 
+    //Loop enough times to extract 4 bytes from message length...
+    //In the case of the LSB being 7 then, you would need to loop 5 times (35)
+    //with a remainder of 3 bits
     int timesToLoop = (32/(*numLSB))+((32%(*numLSB)) != 0);
     int hiddenBit = 0;
-    printf("timesToLoop: %u\n", timesToLoop);
     for(i = 0; i < timesToLoop; i++){
         readPixel(stegFile, stegPixel);
         hiddenChar = getEmbeddedChar(stegPixel, indicator);
         for(j = (*numLSB)-1; j >= 0; j--){
-            //sussy
+            //If you have looped enough times to get 32 bits and there is a remainder left, set it
             if(i == timesToLoop-1 && j == calcRemainder(*numLSB)){
                 remainder = j;
-                printf("Remainder: %d\n", remainder);
                 hiddenBit = readKthBit(j, hiddenChar);
                 msgLength = (msgLength << 1) | hiddenBit;
                 break;
@@ -57,7 +75,6 @@ void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
             msgLength = (msgLength << 1) | hiddenBit;
         }
     }
-    printf("msgLength: %08x %u\nmsgLength (swap): %08x %u\n", msgLength, msgLength, swapEndian(msgLength), swapEndian(msgLength));
     msgLength = swapEndian(msgLength);
 
     //Hidden message length in bytes extracted, now calculate how many pixels to read
@@ -69,10 +86,11 @@ void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
     char *msg = (char *) malloc(sizeof(char)*msgLength*4+1);
     for(i = 0; i < pixelsToRead; i++){
         if(remainder > 0){
-            //Don't read in new pixel...
+            //Don't read in new pixel if there are remaining bits...
         }
         else readPixel(stegFile, stegPixel);
         hiddenChar = getEmbeddedChar(stegPixel, indicator);
+        //If there are 8 bits in the current byte, write it to the msg
         if(bitsInByte > 7){
             bitsInByte = 0;
             msg[msgIndex++] = currentByte;
@@ -92,15 +110,15 @@ void decodeDriver(RGB indicator, char* stegoFile, int* numLSB){
             bitsInByte++;
         }
     }
-    //printf("Message Hexdump:\n");
-    //hexDump(msg, 100);
-    //printf("Message:\n");
-    //printf("%s\n", msg);
     writeMsg(msg, msgLength, stegoFile);
 
 }
 
 
+/*
+ * Writes a message to a file, given the length of the message, the message,
+ * and the path to the file.
+ */
 void writeMsg(char *msg, int msgLen, char *stegoFile){
     char extension[5] = ".txt";
     if(strncmp(msg, "BM", 2) == 0){
