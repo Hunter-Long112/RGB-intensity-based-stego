@@ -1,0 +1,29 @@
+Sneaky Message User Manual
+Project Contributers:
+    Hunter Long (mia014)
+    Thomas White (yhy312)
+    Michael Ginsberg (sfi208)
+
+Important Notes About Sneaky Message:
+- The program was developed on Linux machines and tested on UTSA's fox servers. Please build and test the program on a Linux machine, preferably the fox servers.
+- If compiling on the fox servers:
+    In the Makefile, you will have to swap the CFLAGS line. (i.e. comment out the line that is currently uncommented, and uncomment the line that is currently commented out)
+- The cover image file (and therefore the stego file created) must be a 24 bit BMP file, with a horizontal dimension that is divisible by 4.
+- The program will print the name of the file that is created for both hiding and extraction.
+- If the hidden message is a .bmp or .png file, the program will recognize this and the output file that is created on extraction will have the correct extension. Any other file type will have the extension .txt, and you will have to manually change the name of the output file.
+
+How To Run The Program:
+1. Download 2022_06_CS4463_Team_01_Project_M2.zip, extract files into one directory.
+2. Run the 'make' command in the same directory as the code; this should produce the 'sneakyMessage' executable.
+3. There are two functions of this program: to encode/hide data in a cover image file, and to decode/extract the hidden data from said cover file. 
+    I) To embed data, run this command in the directory that sneakyMessage, the cover image, and the message file exists in: 
+    ./sneakyMessage -m encode -c <cover file> -h <message file> -i <indicator channel (r, g, or b)> -n <number of bits to embed>
+        cover file                  24 bit BMP image file to have data hidden in it
+        message file                file containing data to be hidden in cover image (can be any type of file)
+        indicator channel           pixel channel that will be used to indicate which channel has data embedded in it
+        number of bits to embed     number of bits that will be hidden in each pixel (in range 1 to 7, inclusive)
+    II) To extract data, run this command in the directory that sneakyMessage, and the stego file exists in:
+    ./sneakyMessage -m decode -s <stego file> -i <indicator channel (r, g, or b)> -n <number of bits embedded>
+        stego file                  24 bit BMP file that has data embedded in it
+        indicator channel           pixel channel that will be used to indicate which channel has data embedded in it
+        number of bits to embed     number of bits that will be hidden in each pixel (in range 1 to 7, inclusive)
