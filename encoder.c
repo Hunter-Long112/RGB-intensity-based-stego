@@ -131,6 +131,7 @@ void embedData(enum RGB indicator, bmpData *cover, char *messageData, int* numLS
     char* msgLenAsChar = (char *) &msgLength;
 
     int numDataRead = cover->pixelOffset;
+    unsigned int bytesWritten = 0;
 
     //Embedding loop - start by embedding 4 bytes containing length of message
     //Read in a pixel, find the channel to embed in, and write the data
@@ -143,13 +144,16 @@ void embedData(enum RGB indicator, bmpData *cover, char *messageData, int* numLS
             //Embed message length first
             if(loopCounter < 0){
                loopCounter = 7;
+               bytesWritten++;
                //lenCount refers to the number of message length bytes embedded
                 if(lenCount < 4)
                     msgByte = msgLenAsChar[lenCount++];
                 else if(lenCount >= 4) msgByte = fgetc(msgFile);
             }
             int bitToWrite = readKthBit(loopCounter, msgByte);
-            writeBitToChannel(channelToUse, coverPixel, i, bitToWrite);
+            if(bytesWritten-4 <= msgLength){
+                writeBitToChannel(channelToUse, coverPixel, i, bitToWrite);
+            }
             loopCounter--;
         }
         if(msgOffset > coverFileSize){
